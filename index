@@ -1,1 +1,1365 @@
 
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>당근 개선안 프로토타입</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #F0EDE4;
+    padding: 48px 32px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #1A1A1A;
+    margin-bottom: 8px;
+  }
+  .page-sub {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 48px;
+  }
+  .page-sub span { color: #FF6F0F; font-weight: 700; }
+
+  /* 섹션 타이틀 */
+  .section-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1A1A1A;
+    margin: 48px 0 20px;
+    padding-left: 12px;
+    border-left: 4px solid #FF6F0F;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .p-badge {
+    background: #FF6F0F;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .section-title .p-badge.p2 { background: #FF9A55; }
+  .section-title .p-badge.p3 { background: #3B82F6; }
+  .section-title .p-badge.p4 { background: #8B5CF6; }
+  .section-title .p-badge.p5 { background: #2DBB6E; }
+  .section-title .p-badge.p6 { background: #F59E0B; }
+
+  /* 스크린 컨테이너 */
+  .screens {
+    padding: 16px 12px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+  .screen-wrap {
+    padding: 16px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .screen-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    text-align: center;
+  }
+
+  /* 폰 프레임 */
+  .phone {
+    position: relative;
+    flex-shrink: 0;
+    width: 220px;
+    height: 440px;
+    margin: 14px 14px;
+  }
+  /* 검정 베젤 프레임 */
+  .phone::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 36px;
+    border: 10px solid #1A1A1A;
+    box-shadow: 0 0 0 1.5px #555, 0 16px 40px rgba(0,0,0,0.30);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .phone-inner {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 22px;
+    background: white;
+    scrollbar-width: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-inner::-webkit-scrollbar { display: none; }
+
+  /* 상단 노치 */
+  .notch {
+    display: none; /* phone::before로 대체 */
+  }
+  /* 다이나믹 아일랜드 스타일 노치 */
+  .phone::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 14px;
+    background: #1A1A1A;
+    border-radius: 8px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  /* 앱 공통 */
+  .app-header {
+    background: white;
+    padding: 28px 14px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #F0F0F0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .app-header .back { font-size: 16px; color: #1A1A1A; }
+  .app-header .title { font-size: 13px; font-weight: 700; color: #1A1A1A; }
+  .app-header .more { font-size: 16px; color: #1A1A1A; }
+
+  /* 당근 네비 탭 */
+  .app-nav {
+    background: white;
+    border-top: 1px solid #F0F0F0;
+    display: flex;
+    padding: 6px 0 10px;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 8px;
+    color: #C0C0C0;
+  }
+  .nav-item.active { color: #FF6F0F; }
+  .nav-icon { font-size: 16px; }
+
+  .app-body {
+    padding: 0 0 8px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .app-body::-webkit-scrollbar { display: none; }
+
+  /* 프로필 섹션 */
+  .profile-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: #FFD4A8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .profile-info { flex: 1; }
+  .profile-name { font-size: 13px; font-weight: 700; color: #1A1A1A; }
+  .profile-location { font-size: 10px; color: #888; margin-top: 1px; }
+
+  /* 매너온도 */
+  .manner-temp {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+  }
+  .temp-num { font-size: 12px; font-weight: 800; color: #FF6F0F; }
+  .temp-bar {
+    flex: 1;
+    height: 4px;
+    background: #F0F0F0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .temp-fill { height: 100%; background: linear-gradient(90deg, #FF6F0F, #FFB07A); border-radius: 2px; }
+  .temp-icon { font-size: 10px; }
+
+  /* 배지/태그 */
+  .badge-row { display: flex; gap: 4px; flex-wrap: wrap; padding: 0 14px 10px; }
+  .badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .badge-red { background: #FEECEC; color: #E84040; border-color: #F5A0A0; }
+  .badge-or  { background: #FFF3EB; color: #FF6F0F; border-color: #FFD4A8; }
+  .badge-gn  { background: #EDFBF3; color: #2DBB6E; border-color: #A0DDB8; }
+  .badge-gy  { background: #F5F5F5; color: #666; border-color: #DDD; }
+  .badge-bl  { background: #EFF6FF; color: #3B82F6; border-color: #BFDBFE; }
+
+  /* 정보 카드 */
+  .info-card {
+    margin: 8px 14px;
+    background: #FFF8F5;
+    border: 1px solid #FFE0CC;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .info-card-title { font-size: 10px; font-weight: 700; color: #FF6F0F; margin-bottom: 6px; }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid #FFE8D8;
+    font-size: 10px;
+    color: #3A3A3A;
+  }
+  .info-row:last-child { border: none; }
+  .info-val { font-weight: 700; }
+  .info-val.red { color: #E84040; }
+  .info-val.gn  { color: #2DBB6E; }
+  .info-val.or  { color: #FF6F0F; }
+
+  /* 알림 배너 */
+  .alert-banner {
+    margin: 8px 14px;
+    background: #FEECEC;
+    border: 1px solid #F5A0A0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 14px; flex-shrink: 0; }
+  .alert-text { font-size: 10px; color: #C0392B; line-height: 1.5; }
+  .alert-text strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+  .success-banner {
+    margin: 8px 14px;
+    background: #EDFBF3;
+    border: 1px solid #A0DDB8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .success-text { font-size: 10px; color: #1A7A40; line-height: 1.5; }
+  .success-text strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+  /* 섹션 헤더 */
+  .sec-head {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    padding: 10px 14px 4px;
+  }
+
+  /* 버튼 */
+  .btn-or {
+    margin: 8px 14px;
+    background: #FF6F0F;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+  }
+  .btn-outline {
+    margin: 4px 14px;
+    border: 1.5px solid #FF6F0F;
+    color: #FF6F0F;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 9px;
+    border-radius: 6px;
+    text-align: center;
+  }
+  .btn-gray {
+    margin: 4px 14px;
+    background: #F5F5F5;
+    color: #666;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  /* 구분선 */
+  .divider { height: 6px; background: #F5F5F5; margin: 8px 0; }
+  .thin-divider { height: 1px; background: #F0F0F0; margin: 0 14px; }
+
+  /* 아이템 행 */
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #F8F8F8;
+  }
+  .item-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .item-text { flex: 1; }
+  .item-title { font-size: 11px; font-weight: 600; color: #1A1A1A; }
+  .item-sub { font-size: 9px; color: #888; margin-top: 1px; }
+  .item-right { font-size: 10px; color: #CCC; }
+
+  /* 채팅 버블 */
+  .chat-wrap { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .bubble-row { display: flex; gap: 6px; align-items: flex-end; }
+  .bubble-row.me { flex-direction: row-reverse; }
+  .bubble-avatar { width: 24px; height: 24px; border-radius: 50%; background: #FFD4A8; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .bubble {
+    max-width: 130px;
+    padding: 7px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #1A1A1A;
+    background: #F0F0F0;
+  }
+  .bubble.me { background: #FF6F0F; color: white; border-radius: 12px 12px 2px 12px; }
+  .bubble.other { border-radius: 12px 12px 12px 2px; }
+  .bubble-time { font-size: 8px; color: #BBB; }
+
+  /* 경고 버블 */
+  .warn-bubble {
+    background: #FFF3EB;
+    border: 1px solid #FFD4A8;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 9px;
+    color: #C05A00;
+    line-height: 1.5;
+    display: flex;
+    gap: 6px;
+  }
+
+  /* 택배 상태 */
+  .track-step {
+    display: flex;
+    gap: 10px;
+    padding: 6px 14px;
+    align-items: flex-start;
+  }
+  .step-dot-wrap { display: flex; flex-direction: column; align-items: center; }
+  .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #DDD; flex-shrink: 0; }
+  .step-dot.active { background: #FF6F0F; }
+  .step-dot.done { background: #2DBB6E; }
+  .step-line { width: 1px; height: 18px; background: #E0E0E0; }
+  .step-content { flex: 1; padding-bottom: 8px; }
+  .step-title { font-size: 10px; font-weight: 600; color: #1A1A1A; }
+  .step-title.dim { color: #CCC; }
+  .step-sub { font-size: 9px; color: #888; margin-top: 1px; }
+
+  /* 상품 카드 미니 */
+  .product-mini {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #F8F8F8;
+    align-items: center;
+  }
+  .product-img {
+    width: 48px; height: 48px;
+    border-radius: 6px;
+    background: #F0F0F0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .product-info { flex: 1; }
+  .product-name { font-size: 11px; font-weight: 600; color: #1A1A1A; }
+  .product-price { font-size: 12px; font-weight: 800; color: #1A1A1A; margin-top: 2px; }
+  .product-sub { font-size: 9px; color: #888; margin-top: 1px; }
+
+  /* 온도 미터 */
+  .temp-meter {
+    margin: 8px 14px;
+    background: #F8F8F8;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .temp-meter-title { font-size: 10px; font-weight: 700; color: #666; margin-bottom: 8px; }
+  .temp-bar-big { height: 8px; background: #E8E8E8; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+  .temp-bar-fill { height: 100%; border-radius: 4px; }
+  .temp-labels { display: flex; justify-content: space-between; font-size: 8px; color: #BBB; }
+  .temp-score { text-align: center; margin-top: 8px; font-size: 22px; font-weight: 900; color: #FF6F0F; }
+  .temp-score-label { text-align: center; font-size: 9px; color: #888; margin-top: 2px; }
+
+  /* 후기 별점 */
+  .review-section { padding: 10px 14px; }
+  .review-q { font-size: 11px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+  .stars { display: flex; gap: 4px; margin-bottom: 8px; }
+  .star { font-size: 20px; cursor: pointer; }
+  .review-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .review-tag {
+    font-size: 10px; padding: 4px 9px;
+    border-radius: 14px; border: 1px solid #E0E0E0;
+    color: #666; background: white;
+  }
+  .review-tag.sel { border-color: #FF6F0F; color: #FF6F0F; background: #FFF3EB; }
+
+  /* 결제 요약 */
+  .pay-summary { margin: 8px 14px; }
+  .pay-row {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #666;
+    padding: 4px 0; border-bottom: 1px solid #F5F5F5;
+  }
+  .pay-row.total { font-size: 12px; font-weight: 800; color: #1A1A1A; border: none; padding-top: 8px; }
+
+  /* 검색바 */
+  .search-bar {
+    margin: 8px 14px;
+    background: #F5F5F5;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #BBB;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* 체크박스 항목 */
+  .check-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #F8F8F8;
+    font-size: 11px; color: #1A1A1A;
+  }
+  .checkbox { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid #DDD; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .checkbox.checked { background: #FF6F0F; border-color: #FF6F0F; color: white; font-size: 10px; }
+
+  /* 약속 카드 */
+  .appt-card {
+    margin: 8px 14px;
+    background: #FFF8F5;
+    border: 1px solid #FFE0CC;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .appt-title { font-size: 11px; font-weight: 700; color: #1A1A1A; margin-bottom: 6px; }
+  .appt-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #555; padding: 3px 0; }
+  .appt-icon { font-size: 12px; }
+
+  /* 헤더 탭 */
+  .header-tab {
+    display: flex;
+    border-bottom: 1px solid #F0F0F0;
+  }
+  .h-tab {
+    flex: 1; text-align: center;
+    font-size: 11px; font-weight: 500;
+    padding: 9px 0; color: #BBB;
+    border-bottom: 2px solid transparent;
+  }
+  .h-tab.active { color: #FF6F0F; border-color: #FF6F0F; font-weight: 700; }
+
+  /* 바로구매 단계 */
+  .step-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 12px 14px;
+    background: #F8F8F8;
+    margin: 8px 14px;
+    border-radius: 8px;
+  }
+  .flow-step { text-align: center; }
+  .flow-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #E0E0E0; color: #888;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 4px;
+  }
+  .flow-num.active { background: #FF6F0F; color: white; }
+  .flow-num.done { background: #2DBB6E; color: white; }
+  .flow-label { font-size: 8px; color: #888; }
+  .flow-label.active { color: #FF6F0F; font-weight: 700; }
+  .flow-arrow { font-size: 10px; color: #DDD; margin: 0 4px; padding-bottom: 16px; }
+
+  /* 비용 고지 박스 */
+  .cost-box {
+    margin: 8px 14px;
+    border: 1.5px solid #FFD4A8;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .cost-box-head { background: #FF6F0F; padding: 6px 12px; font-size: 10px; font-weight: 700; color: white; }
+  .cost-box-body { padding: 8px 12px; background: #FFF8F5; }
+  .cost-row { display: flex; justify-content: space-between; font-size: 10px; color: #555; padding: 3px 0; }
+  .cost-total { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #1A1A1A; padding: 6px 0 2px; border-top: 1px dashed #FFD4A8; margin-top: 4px; }
+
+  /* 신고 폼 */
+  .report-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-bottom: 1px solid #F8F8F8;
+    font-size: 11px; color: #1A1A1A;
+  }
+  .radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #DDD; flex-shrink: 0; }
+  .radio.sel { border-color: #FF6F0F; background: radial-gradient(circle, #FF6F0F 40%, white 42%); }
+
+  /* 사기 경보 */
+  .fraud-alert {
+    margin: 8px 14px;
+    background: #FFF3EB;
+    border: 1.5px solid #FFB07A;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .fraud-title { font-size: 11px; font-weight: 800; color: #C05A00; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .fraud-item { font-size: 9px; color: #7A3500; line-height: 1.7; }
+
+  /* 온보딩 */
+  .onboard-step {
+    text-align: center;
+    padding: 16px 14px 8px;
+  }
+  .onboard-icon { font-size: 36px; margin-bottom: 10px; }
+  .onboard-title { font-size: 13px; font-weight: 800; color: #1A1A1A; margin-bottom: 6px; line-height: 1.4; }
+  .onboard-desc { font-size: 10px; color: #666; line-height: 1.65; }
+
+  /* 도트 인디케이터 */
+  .dots { display: flex; justify-content: center; gap: 4px; padding: 8px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: #DDD; }
+  .dot.active { background: #FF6F0F; width: 14px; border-radius: 3px; }
+
+  .page-break {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #DDD8C8, transparent);
+    margin: 48px 0 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>🥕 당근 마켓 개선안 프로토타입</h1>
+<div class="page-sub">P1~P6 개선안 · <span>모바일 앱 스타일</span> · 당근 앱 UX 기반</div>
+
+<!-- ═══════════ P1: 노쇼 제재 ═══════════ -->
+<div class="section-title">
+  <span class="p-badge">P1</span> 노쇼 제재 시스템 — 이력 공개 · 계정 제한 · 예약금 · 자동 알림
+</div>
+<div class="screens">
+
+  <!-- 1-1: 프로필에 노쇼 이력 공개 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">판매자 프로필</span>
+          <span class="more">⋯</span>
+        </div>
+        <div class="app-body">
+          <div class="profile-row">
+            <div class="avatar">😊</div>
+            <div class="profile-info">
+              <div class="profile-name">당근마켓유저</div>
+              <div class="profile-location">📍 마포구 · 인증됨</div>
+              <div class="manner-temp">
+                <span class="temp-num">36.5°</span>
+                <div class="temp-bar"><div class="temp-fill" style="width:37%"></div></div>
+                <span class="temp-icon">🌡️</span>
+              </div>
+            </div>
+          </div>
+          <div class="badge-row">
+            <span class="badge badge-gn">거래 완료 12회</span>
+            <span class="badge badge-red">노쇼 2회 ⚠️</span>
+            <span class="badge badge-gy">응답률 72%</span>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">📊 거래 신뢰 정보 (최근 6개월)</div>
+            <div class="info-row"><span>노쇼 횟수</span><span class="info-val red">2회</span></div>
+            <div class="info-row"><span>신고 이력</span><span class="info-val red">1건</span></div>
+            <div class="info-row"><span>평균 응답시간</span><span class="info-val or">약 3시간</span></div>
+            <div class="info-row"><span>거래 완료</span><span class="info-val gn">12회</span></div>
+          </div>
+          <div class="alert-banner">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-text">
+              <strong>주의가 필요한 판매자입니다</strong>
+              최근 6개월 내 노쇼 이력이 있습니다. 거래 전 충분한 확인을 권장합니다.
+            </div>
+          </div>
+          <div class="btn-or">채팅하기</div>
+          <div class="btn-outline">신고하기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">노쇼 이력 프로필 공개</div>
+  </div>
+
+  <!-- 1-2: 거래 당일 자동 확인 알림 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">거래 확인 알림</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="appt-card">
+            <div class="appt-title">📅 오늘 거래 약속</div>
+            <div class="appt-row"><span class="appt-icon">🕐</span> 오후 3시</div>
+            <div class="appt-row"><span class="appt-icon">📍</span> 마포구 홈플러스 앞</div>
+            <div class="appt-row"><span class="appt-icon">📦</span> 아이패드 에어 5세대</div>
+          </div>
+          <div class="info-card" style="background:#F0F8FF; border-color:#BFDBFE;">
+            <div class="info-card-title" style="color:#3B82F6;">🔔 자동 확인 알림 발송</div>
+            <div style="font-size:10px; color:#555; line-height:1.6;">
+              거래 2시간 전, 양측에<br>
+              자동으로 확인 알림을 보냈습니다.
+            </div>
+          </div>
+          <div class="sec-head">상대방 응답 현황</div>
+          <div class="item-row">
+            <span class="item-icon">✅</span>
+            <div class="item-text">
+              <div class="item-title">나의 확인</div>
+              <div class="item-sub">오후 1:02 확인 완료</div>
+            </div>
+          </div>
+          <div class="item-row">
+            <span class="item-icon">⏳</span>
+            <div class="item-text">
+              <div class="item-title">상대방 확인</div>
+              <div class="item-sub" style="color:#E84040;">아직 미응답</div>
+            </div>
+          </div>
+          <div class="btn-or">거래 확인했어요 ✓</div>
+          <div class="btn-gray">거래 취소하기</div>
+          <div style="padding:8px 14px; font-size:9px; color:#888; line-height:1.6;">
+            💡 상대방이 1시간 내 미응답 시<br>노쇼 이력에 자동 기록됩니다.
+          </div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">거래 당일 자동 확인 알림</div>
+  </div>
+
+  <!-- 1-3: 예약금 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">예약금 설정</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="product-mini">
+            <div class="product-img">📱</div>
+            <div class="product-info">
+              <div class="product-name">아이패드 에어 5세대</div>
+              <div class="product-price">350,000원</div>
+              <div class="product-sub">마포구 · 거래 예약 중</div>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">💰 예약금 안내</div>
+            <div style="font-size:10px; color:#555; line-height:1.7;">
+              노쇼 방지를 위해 소액 예약금을<br>
+              먼저 결제할 수 있어요.<br>
+              거래 완료 시 전액 환불됩니다.
+            </div>
+          </div>
+          <div class="sec-head">예약금 선택</div>
+          <div class="check-item">
+            <div class="checkbox checked">✓</div>
+            <div>
+              <div style="font-size:11px; font-weight:600;">1,000원</div>
+              <div style="font-size:9px; color:#888;">가볍게 약속을 확인해요</div>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <div>
+              <div style="font-size:11px; font-weight:600;">3,000원</div>
+              <div style="font-size:9px; color:#888;">좀 더 확실한 약속</div>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <div>
+              <div style="font-size:11px; font-weight:600;">5,000원</div>
+              <div style="font-size:9px; color:#888;">고가 물품 거래 추천</div>
+            </div>
+          </div>
+          <div style="padding:8px 14px; font-size:9px; color:#888; line-height:1.6; margin-top:4px;">
+            ※ 노쇼 발생 시 예약금은 상대방에게 귀속됩니다.
+          </div>
+          <div class="btn-or">1,000원 예약금 결제하기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">예약금 (소액 보증금)</div>
+  </div>
+
+  <!-- 1-4: 계정 제한 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">계정 이용 제한 안내</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div style="text-align:center; padding:24px 14px 12px;">
+            <div style="font-size:40px; margin-bottom:12px;">🚫</div>
+            <div style="font-size:14px; font-weight:800; color:#1A1A1A; margin-bottom:8px;">거래 기능이 일시 제한되었습니다</div>
+            <div style="font-size:10px; color:#666; line-height:1.7;">
+              최근 3개월 내 노쇼가 3회 이상<br>발생하여 거래 기능이 7일간<br>제한됩니다.
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">📋 제한 내역</div>
+            <div class="info-row"><span>노쇼 발생</span><span class="info-val red">3회 (3개월)</span></div>
+            <div class="info-row"><span>제한 기간</span><span class="info-val or">7일</span></div>
+            <div class="info-row"><span>해제 예정일</span><span class="info-val">6월 22일</span></div>
+          </div>
+          <div class="alert-banner">
+            <span class="alert-icon">📢</span>
+            <div class="alert-text">
+              <strong>제한 중 가능한 활동</strong>
+              상품 조회, 관심 등록은 가능하나 채팅 및 거래 예약은 제한됩니다.
+            </div>
+          </div>
+          <div class="btn-outline">노쇼 이의 신청하기</div>
+          <div class="btn-gray">확인</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item active"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">노쇼 3회 초과 계정 제한</div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════ P3: 사기 예방 ═══════════ -->
+<div class="section-title">
+  <span class="p-badge p3">P3</span> 사기 예방·탐지 — 자동 경보 · 운송장 검증 · 결제 보류
+</div>
+<div class="screens">
+
+  <!-- 3-1: 사기 의심 자동 경보 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">김○○님과의 채팅</span>
+          <span class="more">⋯</span>
+        </div>
+        <div class="app-body">
+          <div class="chat-wrap">
+            <div class="bubble-row">
+              <div class="bubble-avatar">👤</div>
+              <div>
+                <div class="bubble other">안녕하세요! 아이패드 아직 있나요?</div>
+              </div>
+              <div class="bubble-time">오후 2:10</div>
+            </div>
+            <div class="bubble-row me">
+              <div>
+                <div class="bubble me">네 있어요! 직거래 가능하세요?</div>
+              </div>
+              <div class="bubble-time">오후 2:11</div>
+            </div>
+            <div class="bubble-row">
+              <div class="bubble-avatar">👤</div>
+              <div>
+                <div class="bubble other">저 지방이라 택배로 먼저 보내주시면 입금할게요</div>
+              </div>
+              <div class="bubble-time">오후 2:12</div>
+            </div>
+          </div>
+          <div class="fraud-alert">
+            <div class="fraud-title">🚨 사기 의심 패턴 감지</div>
+            <div class="fraud-item">· 선배송 후입금 요구 — 사기 위험 높음<br>· 해당 계정 신고 이력 2건<br>· 유사 사기 패턴과 일치</div>
+          </div>
+          <div style="display:flex; gap:6px; padding:6px 14px;">
+            <div style="flex:1; background:#FEECEC; border-radius:6px; padding:8px; text-align:center; font-size:10px; font-weight:700; color:#E84040;">신고하기</div>
+            <div style="flex:1; background:#F5F5F5; border-radius:6px; padding:8px; text-align:center; font-size:10px; font-weight:700; color:#666;">차단하기</div>
+          </div>
+          <div class="chat-wrap" style="padding-top:4px;">
+            <div style="background:#F5F5F5; border-radius:8px; padding:8px 12px; font-size:10px; color:#888; text-align:center;">
+              안전한 거래를 위해 바로구매를 이용해보세요 →
+            </div>
+          </div>
+        </div>
+        <div style="position:sticky; bottom:56px; background:white; border-top:1px solid #F0F0F0; padding:8px 14px; display:flex; gap:6px; align-items:center;">
+          <div style="flex:1; background:#F5F5F5; border-radius:20px; padding:8px 12px; font-size:10px; color:#BBB;">메시지를 입력하세요</div>
+          <div style="color:#FF6F0F; font-size:18px;">📷</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">사기 의심 자동 경보</div>
+  </div>
+
+  <!-- 3-2: 운송장 검증 + 결제 보류 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">택배 거래 진행 중</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="product-mini">
+            <div class="product-img">📱</div>
+            <div class="product-info">
+              <div class="product-name">아이패드 에어 5세대</div>
+              <div class="product-price">350,000원</div>
+              <div class="product-sub">결제 보류 중 · CJ대한통운</div>
+            </div>
+          </div>
+          <div class="step-flow">
+            <div class="flow-step">
+              <div class="flow-num done">✓</div>
+              <div class="flow-label">결제</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-num done">✓</div>
+              <div class="flow-label">발송</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-num active">●</div>
+              <div class="flow-label active">배송 중</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-label">구매확정</div>
+            </div>
+          </div>
+          <div class="info-card" style="background:#EDFBF3; border-color:#A0DDB8;">
+            <div class="info-card-title" style="color:#2DBB6E;">🔒 결제 보류 안내</div>
+            <div style="font-size:10px; color:#555; line-height:1.7;">
+              350,000원이 안전하게 보호 중입니다.<br>
+              수령 확인 후 판매자에게 전달됩니다.
+            </div>
+          </div>
+          <div class="sec-head">운송장 정보</div>
+          <div class="item-row">
+            <span class="item-icon">✅</span>
+            <div class="item-text">
+              <div class="item-title">운송장 번호 검증 완료</div>
+              <div class="item-sub">CJ대한통운 · 1234-5678-9012</div>
+            </div>
+          </div>
+          <div class="sec-head">배송 현황</div>
+          <div class="track-step">
+            <div class="step-dot-wrap"><div class="step-dot done"></div><div class="step-line"></div></div>
+            <div class="step-content"><div class="step-title">발송 완료</div><div class="step-sub">6/14 오후 2:30</div></div>
+          </div>
+          <div class="track-step">
+            <div class="step-dot-wrap"><div class="step-dot active"></div><div class="step-line"></div></div>
+            <div class="step-content"><div class="step-title" style="color:#FF6F0F;">배송 중</div><div class="step-sub">서울 마포 허브</div></div>
+          </div>
+          <div class="track-step">
+            <div class="step-dot-wrap"><div class="step-dot"></div></div>
+            <div class="step-content"><div class="step-title dim">배달 완료</div></div>
+          </div>
+          <div class="btn-or">수령 완료 · 구매 확정하기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">운송장 검증 + 결제 보류</div>
+  </div>
+
+  <!-- 3-3: 분쟁 신고 채널 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">분쟁 신고</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="product-mini">
+            <div class="product-img">📱</div>
+            <div class="product-info">
+              <div class="product-name">아이패드 에어 5세대</div>
+              <div class="product-price">350,000원</div>
+              <div class="product-sub">거래 일시: 6월 14일</div>
+            </div>
+          </div>
+          <div class="sec-head">신고 유형 선택</div>
+          <div class="report-option"><div class="radio sel"></div>상품이 설명과 다릅니다</div>
+          <div class="report-option"><div class="radio"></div>상품이 파손되어 도착했습니다</div>
+          <div class="report-option"><div class="radio"></div>상품을 받지 못했습니다</div>
+          <div class="report-option"><div class="radio"></div>판매자가 연락이 안 됩니다</div>
+          <div class="report-option"><div class="radio"></div>기타</div>
+          <div class="info-card" style="margin-top:8px;">
+            <div class="info-card-title">📋 처리 절차 안내</div>
+            <div class="info-row"><span>접수</span><span class="info-val gn">즉시</span></div>
+            <div class="info-row"><span>담당자 배정</span><span class="info-val or">1영업일 내</span></div>
+            <div class="info-row"><span>결과 통보</span><span class="info-val">3~5 영업일</span></div>
+          </div>
+          <div class="btn-or">분쟁 신고 접수하기</div>
+          <div style="padding:6px 14px; font-size:9px; color:#888; text-align:center; line-height:1.6;">
+            접수 후 처리 현황을 알림으로 안내드립니다
+          </div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">분쟁 신고 + 처리 안내</div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════ P5: 바로구매 온보딩 ═══════════ -->
+<div class="section-title">
+  <span class="p-badge p5">P5</span> 바로구매 온보딩 — 첫 이용 가이드 · 수수료 투명 고지
+</div>
+<div class="screens">
+
+  <!-- 5-1: 온보딩 1단계 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">✕</span>
+          <span class="title">바로구매 시작하기</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="onboard-step">
+            <div class="onboard-icon">📦</div>
+            <div class="onboard-title">집에서 편하게<br>택배로 거래해요</div>
+            <div class="onboard-desc">
+              직접 만나지 않아도 안전하게<br>
+              당근이 중간에서 도와드려요.<br><br>
+              결제금은 수령 확인 전까지<br>
+              당근이 안전하게 보관합니다.
+            </div>
+          </div>
+          <div class="dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">✅ 바로구매 이런 점이 좋아요</div>
+            <div class="item-row" style="padding:6px 0; border:none;">
+              <span class="item-icon">🔒</span>
+              <div class="item-text"><div class="item-title" style="font-size:10px;">결제 보호</div><div class="item-sub">수령 전까지 결제금 안전 보관</div></div>
+            </div>
+            <div class="thin-divider" style="margin:0;"></div>
+            <div class="item-row" style="padding:6px 0; border:none;">
+              <span class="item-icon">📍</span>
+              <div class="item-text"><div class="item-title" style="font-size:10px;">장소 불필요</div><div class="item-sub">직접 만나지 않아도 거래 가능</div></div>
+            </div>
+            <div class="thin-divider" style="margin:0;"></div>
+            <div class="item-row" style="padding:6px 0; border:none;">
+              <span class="item-icon">🛡️</span>
+              <div class="item-text"><div class="item-title" style="font-size:10px;">분쟁 보호</div><div class="item-sub">문제 발생 시 당근이 중재</div></div>
+            </div>
+          </div>
+          <div class="btn-or">다음 →</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">온보딩 1 · 서비스 소개</div>
+  </div>
+
+  <!-- 5-2: 비용 고지 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">바로구매 시작하기</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="onboard-step">
+            <div class="onboard-icon">💰</div>
+            <div class="onboard-title">이용 비용을<br>미리 확인해요</div>
+            <div class="onboard-desc">숨겨진 비용 없이 투명하게 안내드려요</div>
+          </div>
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="cost-box">
+            <div class="cost-box-head">💳 바로구매 이용 비용 안내</div>
+            <div class="cost-box-body">
+              <div class="cost-row"><span>상품 가격 (예시)</span><span>100,000원</span></div>
+              <div class="cost-row"><span>판매 수수료 (3.3%)</span><span style="color:#E84040;">+3,300원</span></div>
+              <div class="cost-row"><span>택배비 (CJ대한통운 기준)</span><span style="color:#E84040;">+4,000원</span></div>
+              <div class="cost-total"><span>구매자 총 결제</span><span>104,000원</span></div>
+            </div>
+          </div>
+          <div style="padding:4px 14px 8px; font-size:9px; color:#888; line-height:1.7;">
+            ※ 수수료는 판매자 부담, 택배비는 협의에 따라 달라질 수 있습니다.<br>
+            ※ 실제 금액은 결제 전 최종 화면에서 확인하세요.
+          </div>
+          <div class="btn-or">다음 →</div>
+          <div class="btn-gray">건너뛰기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">온보딩 2 · 수수료 투명 고지</div>
+  </div>
+
+  <!-- 5-3: 바로구매 결제 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">바로구매 결제</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="product-mini">
+            <div class="product-img">👗</div>
+            <div class="product-info">
+              <div class="product-name">빈폴 패딩 M사이즈</div>
+              <div class="product-price">35,000원</div>
+              <div class="product-sub">마포구 · 바로구매</div>
+            </div>
+          </div>
+          <div class="step-flow">
+            <div class="flow-step"><div class="flow-num active">1</div><div class="flow-label active">결제</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-label">발송</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-label">수령</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-label">완료</div></div>
+          </div>
+          <div class="pay-summary">
+            <div class="pay-row"><span>상품 가격</span><span>35,000원</span></div>
+            <div class="pay-row"><span>택배비</span><span>4,000원</span></div>
+            <div class="pay-row total"><span>최종 결제금액</span><span>39,000원</span></div>
+          </div>
+          <div class="sec-head">결제 수단</div>
+          <div class="check-item">
+            <div class="checkbox checked">✓</div>
+            <div>
+              <div style="font-size:11px; font-weight:600;">당근페이</div>
+              <div style="font-size:9px; color:#888;">잔액 52,300원</div>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <div style="font-size:11px; font-weight:600;">신용카드</div>
+          </div>
+          <div class="success-banner">
+            <span style="font-size:14px;">🔒</span>
+            <div class="success-text">
+              <strong>결제금 보호 안내</strong>
+              39,000원은 수령 확인 전까지 당근이 안전하게 보관합니다.
+            </div>
+          </div>
+          <div class="btn-or">39,000원 결제하기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">온보딩 3 · 결제 화면</div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════ P6: 매너온도 ═══════════ -->
+<div class="section-title">
+  <span class="p-badge p6">P6</span> 매너온도 개편 — 기준 명확화 · 부정 후기 유도 · 온도 설명
+</div>
+<div class="screens">
+
+  <!-- 6-1: 매너온도 기준 설명 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">매너온도란?</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="temp-meter">
+            <div class="temp-meter-title">🌡️ 매너온도 구간별 의미</div>
+            <div class="temp-bar-big">
+              <div class="temp-bar-fill" style="width:70%; background:linear-gradient(90deg,#3B82F6,#2DBB6E,#FF6F0F,#E84040);"></div>
+            </div>
+            <div class="temp-labels"><span>0°</span><span>36.5°</span><span>99°</span></div>
+          </div>
+          <div class="item-row"><span class="item-icon">🔵</span><div class="item-text"><div class="item-title">0~20° 매우 낮음</div><div class="item-sub">분쟁·사기 이력 다수 / 거래 주의</div></div></div>
+          <div class="item-row"><span class="item-icon">🟢</span><div class="item-text"><div class="item-title">21~36° 낮음</div><div class="item-sub">거래 이력 부족 / 신중한 거래 권장</div></div></div>
+          <div class="item-row"><span class="item-icon">🟠</span><div class="item-text"><div class="item-title">36.5° 시작 온도</div><div class="item-sub">신규 사용자 기본값</div></div></div>
+          <div class="item-row"><span class="item-icon">🟡</span><div class="item-text"><div class="item-title">37~60° 보통</div><div class="item-sub">일반적인 거래 이력</div></div></div>
+          <div class="item-row"><span class="item-icon">🔴</span><div class="item-text"><div class="item-title">61~99° 높음</div><div class="item-sub">신뢰도 높은 판매자 / 안심 거래</div></div></div>
+          <div class="info-card" style="margin-top:4px;">
+            <div class="info-card-title">📈 온도 변동 기준</div>
+            <div class="info-row"><span>긍정 거래 후기</span><span class="info-val gn">+0.1°</span></div>
+            <div class="info-row"><span>부정 거래 후기</span><span class="info-val red">-0.5°</span></div>
+            <div class="info-row"><span>노쇼 발생</span><span class="info-val red">-1.0°</span></div>
+            <div class="info-row"><span>신고 접수</span><span class="info-val red">-2.0°</span></div>
+          </div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item active"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">매너온도 기준 명확화</div>
+  </div>
+
+  <!-- 6-2: 후기 작성 개선 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">거래 후기 작성</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div class="product-mini">
+            <div class="product-img">👗</div>
+            <div class="product-info">
+              <div class="product-name">빈폴 패딩</div>
+              <div class="product-sub">판매자: 당근유저 · 6월 14일</div>
+            </div>
+          </div>
+          <div class="review-section">
+            <div class="review-q">거래는 어떠셨나요?</div>
+            <div class="stars">
+              <span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star" style="filter:grayscale(1)">⭐</span><span class="star" style="filter:grayscale(1)">⭐</span>
+            </div>
+            <div style="font-size:10px; color:#888; margin-bottom:10px;">3점 · 보통이에요</div>
+            <div class="review-q">어떤 점이 아쉬웠나요?</div>
+            <div class="review-tags">
+              <div class="review-tag sel">응답이 느렸어요</div>
+              <div class="review-tag">시간 약속을 안 지켰어요</div>
+              <div class="review-tag">설명과 달랐어요</div>
+              <div class="review-tag sel">가격 흥정이 불편했어요</div>
+              <div class="review-tag">친절했어요</div>
+            </div>
+            <div style="margin-top:8px;">
+              <div class="review-q">솔직한 후기가 도움이 돼요</div>
+              <div style="font-size:9px; color:#888; line-height:1.6; margin-top:4px;">
+                🧡 솔직한 후기는 다른 사용자의<br>
+                안전한 거래에 큰 도움이 됩니다.<br>
+                좋은 점도, 아쉬운 점도 솔직하게 남겨주세요.
+              </div>
+            </div>
+          </div>
+          <div class="btn-or">후기 등록하기</div>
+          <div class="btn-gray">나중에 하기</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item active"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">부정 후기 유도 개선</div>
+  </div>
+
+  <!-- 6-3: 프로필 온도 설명 -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="app-header">
+          <span class="back">←</span>
+          <span class="title">나의 매너온도</span>
+          <span class="more"></span>
+        </div>
+        <div class="app-body">
+          <div style="text-align:center; padding:16px 14px 8px;">
+            <div style="font-size:36px; font-weight:900; color:#FF6F0F; line-height:1;">42.3°</div>
+            <div style="font-size:11px; color:#888; margin-top:4px;">🌡️ 따뜻한 이웃</div>
+            <div class="temp-bar" style="width:80%; margin:10px auto 0; height:8px; border-radius:4px;">
+              <div class="temp-fill" style="width:43%; background:linear-gradient(90deg,#FF6F0F,#FFB07A);"></div>
+            </div>
+          </div>
+          <div class="header-tab">
+            <div class="h-tab active">온도 내역</div>
+            <div class="h-tab">받은 후기</div>
+          </div>
+          <div class="sec-head">최근 온도 변동</div>
+          <div class="item-row">
+            <span class="item-icon" style="color:#2DBB6E;">▲</span>
+            <div class="item-text"><div class="item-title">긍정 후기 수령</div><div class="item-sub">빈폴 패딩 거래 · 6월 14일</div></div>
+            <div class="item-right" style="color:#2DBB6E; font-weight:700;">+0.1°</div>
+          </div>
+          <div class="item-row">
+            <span class="item-icon" style="color:#E84040;">▼</span>
+            <div class="item-text"><div class="item-title">노쇼 기록</div><div class="item-sub">아이패드 거래 · 6월 10일</div></div>
+            <div class="item-right" style="color:#E84040; font-weight:700;">-1.0°</div>
+          </div>
+          <div class="item-row">
+            <span class="item-icon" style="color:#2DBB6E;">▲</span>
+            <div class="item-text"><div class="item-title">긍정 후기 수령</div><div class="item-sub">나이키 신발 거래 · 6월 5일</div></div>
+            <div class="item-right" style="color:#2DBB6E; font-weight:700;">+0.1°</div>
+          </div>
+          <div class="item-row">
+            <span class="item-icon" style="color:#2DBB6E;">▲</span>
+            <div class="item-text"><div class="item-title">긍정 후기 수령</div><div class="item-sub">맥북 거래 · 5월 28일</div></div>
+            <div class="item-right" style="color:#2DBB6E; font-weight:700;">+0.1°</div>
+          </div>
+          <div style="padding:8px 14px;">
+            <div style="background:#F5F5F5; border-radius:6px; padding:10px 12px; font-size:9px; color:#888; line-height:1.7;">
+              💡 온도를 올리려면?<br>
+              · 약속 시간 잘 지키기<br>
+              · 상품 설명 정확하게 작성하기<br>
+              · 친절하게 소통하기
+            </div>
+          </div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+          <div class="nav-item"><div class="nav-icon">💬</div><div>채팅</div></div>
+          <div class="nav-item"><div class="nav-icon">➕</div><div>글쓰기</div></div>
+          <div class="nav-item"><div class="nav-icon">🔔</div><div>알림</div></div>
+          <div class="nav-item active"><div class="nav-icon">👤</div><div>나의당근</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">온도 변동 이유 투명 공개</div>
+  </div>
+</div>
+
+</body>
+</html>
